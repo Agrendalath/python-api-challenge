@@ -9,11 +9,26 @@ import requests
 from generate_csv import filter_departures, generate_endpoint, get_departures, main
 
 
+class Dummy:
+    pass
+
+
 def load_departures():
     with open('departures.json', 'r') as f:
         data = json.load(f)
 
     return data
+
+
+def generate_mock_response():
+    mock_response = Dummy()
+    departures = load_departures()
+
+    mock_response.json = lambda: {
+        'next': None,
+        'results': departures,
+    }
+    return mock_response
 
 
 def test_generate_endpoint():
@@ -40,33 +55,10 @@ def test_filter_departures():
         assert departure['start_date'] > start_date
 
 
-def test_generate_csv():
-    filename = 'test_csv.csv'
-    main(filename=filename)
-    assert os.path.isfile(filename)
-    with open(filename, 'r', newline='') as f:
-        reader = csv.reader(f)
-        counter = 1
-        for _ in reader:
-            counter += 1
-
-    assert counter == 26  # header + rows + empty line at the end
-    os.remove(filename)
-
-
 @mock.patch('requests.get')
 def test_get_departures(mock_get):
-    class Dummy:
-        pass
-
-    mock_response = Dummy()
     departures = load_departures()
-
-    mock_response.json = lambda: {
-        'next': None,
-        'results': departures,
-    }
-    mock_get.return_value = mock_response
+    mock_get.return_value = generate_mock_response()
 
     get = get_departures('test')
     assert next(get) == departures
@@ -77,3 +69,20 @@ def test_get_departures(mock_get):
 def test_get_departures_server_unavailable():
     with pytest.raises(requests.RequestException):
         next(get_departures('test'))
+
+
+@mock.patch('requests.get')
+def test_generate_csv(mock_get):
+    filename = 'test_csv.csv'
+    mock_get.return_value = generate_mock_response()
+
+    main(filename=filename)
+    assert os.path.isfile(filename)
+    with open(filename, 'r', newline='') as f:
+        reader = csv.reader(f)
+        counter = 1
+        for _ in reader:
+            counter += 1
+
+    assert counter == 26  # header + rows + empty line at the end
+    os.remove(filename)
