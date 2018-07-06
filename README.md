@@ -1,4 +1,5 @@
 # Python API Challenge
+[![CircleCI](https://circleci.com/gh/Agrendalath/python-api-challenge.svg?style=svg)](https://circleci.com/gh/Agrendalath/python-api-challenge)
 
 ## Project
 
@@ -111,3 +112,45 @@ We've included a basic Django project and a `Departure` model with some fields,
 which you will consume.
 
 Otherwise, the rest is up to you!
+
+## Solution
+
+### Workflow
+![approach](https://raw.githubusercontent.com/Agrendalath/python-api-challenge/master/approach.png) 
+
+My first step was to quickly prototype what will be the fastest solution for filtering this data.
+
+[Pandas](https://pandas.pydata.org/) can be easily used for this purpose, but, as you can see on the attached screenshot, it is a bit overkill here - on data set of this size it will run slower than standard Python list comprehension. It would be surely worth for bigger collection, so it mainly depends on the expected data set size and genericity of expected solution. I decided to filter chunks of data to save some memory. I could have retrieved all data and then do one filter on it (it would probably be a better solution for approach with Pandas).
+
+The next step was writing app functions skeleton and writing tests for these functions.
+Then was the implementation of functions and some minor bug fixes.
+After that, I have added the CI (CircleCI in this case) to ensure that tests will be machine-agnostic (as you can see in the CI history, the first approach failed because I forgot to mock response in one test).
+Future step for this could be, e.g. adding Docker container to CI with running API to create e2e tests along the created unit tests. Another one could be adding Docker containers for easy deployment, adding linters, coverage checks, etc.
+
+### Approach
+1. Check if there was any input from used (with parameters).
+2. Generate endpoint URL.
+3. Get chunk of paginated data from URL and return it by generator. If there is data, go to point 4., else go to point 5.
+4. Filter data by desired parameters and add it to final result.
+5. Create CSV file with final result.
+
+### Usage
+**NOTE**: You should install project dependencies and run the server in separate terminal (as described above) before using the script.
+You can run the filtering script using following command:
+    
+    python generate_csv.py
+    
+The results will be in `filtered_departures.csv` file.
+    
+You can also specify optional parameters by adding `parameter=value` after this command. The parameters should be separated by spaces. The available parameters are:
+- `prococol` - default: `http` 
+- `hostname` - default: `127.0.0.1` 
+- `port` - default: `8000` 
+- `api` - default: `departures` 
+- `category` - default: `Adventurous` 
+- `start_date` - default: `2018-06-1` 
+- `filename` - default: `filtered_departures.csv` 
+
+To run tests, simply issue the following command:
+    
+    pytest
