@@ -22,6 +22,7 @@ def get_departures(next_url: str) -> Generator[List[Dict[str, str]], None, None]
     :param next_url: API URL.
     :return: List of received Departure dicts.
     """
+    # We could add a safe stopping condition here if we have suspicion that API could create infinite loop.
     while next_url:
         response = requests.get(next_url).json()
         next_url = response['next']
